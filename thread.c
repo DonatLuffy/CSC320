@@ -1,9 +1,10 @@
-#include <string.h>
 #include <stdio.h>
-#include <unistd.h>
+#include <stdlib.h>
+#include <unistd.h> //Header file for sleep(). man 3 sleep for details.
+#include <pthread.h>
+#include <string.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <stdlib.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <time.h>
@@ -34,11 +35,12 @@ int Possibility();
 int Random();
 struct tm *getDate();
 void handler();
+void* Processor();
 
 /* defined Constant*/
 #define MAX_JOBS 5
-char memoryManager[2000];
-Resources resourcesManager;
+char memory[2000];
+int PROCESSORS = 2;/*number of Processors avaliable*/
 
 /* declare Queue*/
 Queue* JobsQueue;
@@ -74,31 +76,34 @@ void Generator(){
   }
 }
 void SchedulerJobs(Job job){
+	printf("%d\n", job.number);
+  enqueue(JobsQueue, &job);
+	if(PROCESSORS != 0){
+		PROCESSORS--;
+	  pthread_t thread_id;
+	  printf("Before Thread\n");
+	  pthread_create(&thread_id, NULL, Processor, ((Job*)dequeue(JobsQueue)));
+	  pthread_join(thread_id, NULL);
+	  printf("After Thread\n");
+		PROCESSORS++;
+ 	}
+}
+// A normal C function that is executed as a thread
+// when its name is specified in pthread_create()
+void *Processor(Job job)
+{
+	sleep(2);
+	printf("Printing %d from Thread \n",job.number);
+	return NULL;
+}
 
-  printf("=====\n");
-  printf("%d\n", job.number);
-  printf("%d\n", job.execution_time);
-  printf("%d\n", job.memory_requirement);
-
-  printf("A=%d\tB=%d\tC=%d\tD=%d\n", job.resources.resource_A,job.resources.resource_B,job.resources.resource_C,job.resources.resource_D);
-
-  printf("=====\n");
-
-  /*enqueue(JobsQueue, &job);
-   ((Job)dequeue(JobsQueue))*/
+void MemoryManager(){
 
 }
-void MemoryManager(Job job){
-  if(job.memory_requirement <= sizeof(memoryManager)){
-    memoryManager -= job.memory_requirement;
-  }
-}
-void ResourceManager(){
+void ResourceManager(Resources resources){
 
 }
-void Processors(){
 
-}
 int Possibility(){
   int possibility;
   possibility = Random(1,10);
@@ -121,20 +126,19 @@ struct tm *getDate(){
 void writeLog(const char * filename){
 
 }
-int main(int argc, char *argv[]){
+int main(){
+	/*set srand (seed) once to prevent repeate values in seconds*/
+	time_t t;
+	srand((unsigned) time(&t));
 
-  /*set srand (seed) once to prevent repeate values in seconds*/
-  time_t t;
-  srand((unsigned) time(&t));
+	/* Intializes jobs queue for SchedulerJobs*/
+	JobsQueue = new_queue();
 
-  /* Intializes jobs queue for SchedulerJobs*/
-  JobsQueue = new_queue();
+	/*set sigmal to force quit programm (try without it! and press CTRL+C)*/
+	signal(SIGINT,handler);
+	printf("%lu\n", sizeof(memory));
+	/* start run program */
+	Generator();
 
-  /*set sigmal to force quit programm (try without it! and press CTRL+C)*/
-  signal(SIGINT,handler);
-  printf("%lu\n", sizeof(memory));
-  /* start run program */
-  Generator();
-
-  return 0;
+	exit(0);
 }

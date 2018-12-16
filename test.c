@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 // #include <dirent.h>
 #include <time.h>
+#include <signal.h>
 
 /*
 void Generator(){
@@ -51,14 +52,21 @@ void writeLog(const char * filename){
   exit(1);
   }
 }*/
+/* set Handler*/
+void handler(){
 
+  exit(0);
+}
+int Random(int min, int max){
 
+  return (min + (rand() % (max - min + 1)));
+}
 int main(int argc, char *argv[]){
-
-  char *str = (char *) malloc( 3 * sizeof(char));
-  *str = 'H'; *(str+1) = 'i'; *(str+2) = '\0';
-  str = (char *) realloc( str , 6 * sizeof(char) );
-  *(str+1) = 'e'; *(str+2) = 'l'; *(str+3) = 'l'; *(str+4) = 'o'; *(str+5) = '\0';
-  printf("%s\n", str);
+  time_t t;
+  srand((unsigned) time(&t));
+  signal(SIGINT,handler);
+  while(1){
+    printf("%d\n", Random(1,100));
+  }
   return 0;
 }
