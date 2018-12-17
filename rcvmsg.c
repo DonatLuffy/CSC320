@@ -35,14 +35,14 @@ Job resciveMessage(){
   Job job;
 	key = ftok("/Users/Donat/csc320/project", 'A');
 	msqid = msgget(key, 0666 | IPC_CREAT);
-  msgrcv(msqid, &job, sizeof(job), -4, 0);
+  msgrcv(msqid, &job, sizeof(job), -6, 0);
   return job;
 }
 int main(int argc, char *argv[]){
 
 	/**/
 
-
+  Job job = resciveMessage();
   printf("=====\n");
   printf("%d\n", job.number);
   printf("%d\n", job.execution_time);

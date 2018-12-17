@@ -9,64 +9,38 @@
 #include <time.h>
 #include <signal.h>
 
-/*
-void Generator(){
-  while(1){
-    int i, id;
-    int generates_maximum = Random(0,5);
-    Job job;
-    for (i = 0; i < generates_maximum; i++) {
-      if(id < MAX_JOBS){
-        job.number = id++;
-      }
-      job.creation_date = getDate();
-      job.execution_time = Random(10,1000);
-      job.memory_requirement = Random(1,100);
-      job.resources.resource_A = _Possibility();
-      job.resources.resource_B = _Possibility();
-      job.resources.resource_C = _Possibility();
-      job.resources.resource_D = _Possibility();
-      _Scheduler(job);
-    }
-    time_t rawtime;
-    struct tm * timeinfo;
 
-    time ( &rawtime );
-    timeinfo = localtime ( &rawtime );
-    printf ( "Current local time and date: %s", asctime (timeinfo) );
-    sleep(1);
-  }
-}
-void writeLog(const char * filename){
-  char buf1[12] = "hello world";
-  int fd; /* file descriptor
-  int nbytes; /* number of bytes read
-  if((fd = open(filename, O_WRONLY | O_APPEND)) < 0){
-    perror("open");
-    exit(1);
-  }
-  write(fd, buf1, strlen(buf1));
-  int retval; /* return value
-  if ((retval = close(fd)) < 0) {
-  perror("close");
-  exit(1);
-  }
-}*/
 /* set Handler*/
 void handler(){
 
   exit(0);
 }
-int Random(int min, int max){
+typedef struct Resources {// 0 = false, 1 = true
+  int resource_A;
+  int resource_B;
+  int resource_C;
+  int resource_D;
+}Resources;
 
-  return (min + (rand() % (max - min + 1)));
+typedef struct Job {
+  int number;
+  struct tm *creation_date;
+  int execution_time;
+  int memory_requirement;
+  Resources resources;
+}Job;
+
+Resources resourcesManager = {0,0,0,0};
+
+int checkAvaliableResources(Job job){
+	return (!(job.resources.resource_A && resourcesManager.resource_A) &&
+          !(job.resources.resource_B && resourcesManager.resource_B) &&
+          !(job.resources.resource_C && resourcesManager.resource_C) &&
+          !(job.resources.resource_D && resourcesManager.resource_D));
 }
 int main(int argc, char *argv[]){
-  time_t t;
-  srand((unsigned) time(&t));
-  signal(SIGINT,handler);
-  while(1){
-    printf("%d\n", Random(1,100));
-  }
+
+  Job job = {1,NULL,234,634,{0,0,0,0}};
+  printf("%lu\n", sizeof(job));
   return 0;
 }
