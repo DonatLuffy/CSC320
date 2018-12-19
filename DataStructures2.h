@@ -30,11 +30,11 @@ typedef struct message {
 ////////////////////////////////////////////////
 /* define Node*/
 typedef struct Node {
-        void* data;
+        Job data;
         struct Node* next;
 }Node;
 
-Node* new_node(void *data){
+Node* new_node(Job data){
         Node* node = (Node*) calloc(1,sizeof(Node));
         node->data = data;
         return node;
@@ -68,7 +68,7 @@ int is_empty(LinkedList* list){
 //         insert_at_back(queue->buffer, data);
 // }
 
-void insert_at_back(LinkedList* list, void* data){
+void insert_at_back(LinkedList* list, Job data){
         Node* node = new_node(data);
         if(!node) {
                 return;
@@ -92,11 +92,11 @@ void insert_at_back(LinkedList* list, void* data){
 
 
 
-void* remove_from_front(LinkedList* list){
-        void* result;
+Job remove_from_front(LinkedList* list){
+        Job result;
         Node* tmp = list->head;
-        if(!tmp)
-                return NULL;
+        // if(!tmp)
+        //         return NULL;
 
         result = tmp->data;
         list->head = tmp->next;
@@ -117,11 +117,11 @@ Queue* new_queue(){
         queue->buffer = new_linked_list();
         return queue;
 }
-void enqueue(Queue* queue, void* data){
+void enqueue(Queue* queue, Job data){
         insert_at_back(queue->buffer, data);
 }
 
-void* dequeue(Queue* queue){
+Job dequeue(Queue* queue){
 
         return remove_from_front(queue->buffer);
 }
