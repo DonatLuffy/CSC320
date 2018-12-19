@@ -11,23 +11,6 @@
 #include <signal.h>
 #include "DataStructures.h"
 
-/* Structs */
-typedef struct Resources {// 0 = false, 1 = true
-  int resource_A;
-  int resource_B;
-  int resource_C;
-  int resource_D;
-}Resources;
-
-typedef struct Job {
-  int number;
-  struct tm *creation_date;
-  int execution_time;
-  int memory_requirement;
-  Resources resources;
-}Job;
-
-
 /*functions prototype*/
 void Generator();
 // void SchedulerJobs();
@@ -55,7 +38,6 @@ void handler(){
 }
 
 void Generator(){
-  int num, fd;
         int num, fd;
         mkfifo("./pipe", 0777);
         printf("waiting for readers...\n");
