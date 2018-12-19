@@ -115,7 +115,7 @@ void SchedulerJobs(){
                                         P_1=0;  //lock the processor because it used
 
                                         msgid = msgget(key, 0666 | IPC_CREAT); //put this line every time you wnat to send/recevie a message
-                                        // j=*(Job*)dequeue(JobsQueue);  //for DataStructures test
+                                        // j=*(Job*)dequeue(JobsQueue);  //for DataStructures.h test
                                         j=dequeue(JobsQueue); //new style
                                         printf("\t send : %d \n",j.number );
 
@@ -124,6 +124,7 @@ void SchedulerJobs(){
                                         // sleep(3);
                                         // continue;
                                 }
+                                //TODO add processor number 2
                                 // else if (P_2==1) { //Checks if the processor 1 is avaliable or not
                                 //         P_2=0;
                                 // }

@@ -62,12 +62,6 @@ int is_empty(LinkedList* list){
         return !list->head;
 }
 
-
-//
-// void enqueue(Queue* queue, void* data){
-//         insert_at_back(queue->buffer, data);
-// }
-
 void insert_at_back(LinkedList* list, Job data){
         Node* node = new_node(data);
         if(!node) {
@@ -86,27 +80,18 @@ void insert_at_back(LinkedList* list, Job data){
         }
 }
 
-
-
-
-
-
-
 Job remove_from_front(LinkedList* list){
         Job result;
         Node* tmp = list->head;
-        // if(!tmp)
-        //         return NULL;
-
+        if(!tmp) {
+                perror("error trying to dequeue from empty queue");
+                exit(1);
+        }
         result = tmp->data;
         list->head = tmp->next;
         free(tmp);
         return result;
 }
-
-
-
-
 
 /* define Queue*/
 typedef struct Queue {
