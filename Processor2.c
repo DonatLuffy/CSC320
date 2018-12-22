@@ -19,7 +19,7 @@ int main()
                 if ((msgrcv(msgid, &j, sizeof(Job),2, 0))>0) {
                         // sleep(3);
                         // display the message //delete
-                        printf("\t Received : %d \n",
+                        printf("\t ->Received job number=: %d \n",
                                j.number);
                         s1.P_2= 1;
 ////////////////////////////////////////////////////////////////////////////
@@ -33,7 +33,7 @@ int main()
                         msgsnd(msgid, &s1, sizeof(message), 0);
 
                         j.mtype=11;
-                        printf("\tfinsh from job number=%d\n",j.number );
+                        printf("   Finsh from job number=%d\n",j.number );
                         msgid = msgget(key, 0666 | IPC_CREAT);
                         msgsnd(msgid, &j, sizeof(Job), 0);
 

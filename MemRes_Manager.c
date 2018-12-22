@@ -7,13 +7,12 @@
 void exitfunc();
 int memory = 2000;
 Resources resourcesManager = {0,0,0,0};
-
 int checkAvaliableResources(Resources);
 void reserveResources(Job);
 void releaseResources(Job);
 int main()
 {
-        ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
         key_t key;
         // ftok to generate unique key
         key = ftok("prog.c", 65);
@@ -21,24 +20,22 @@ int main()
         Job j;
         message s1;
         s1.mtype=5;//change this
-        ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+        printf("\t\t--------\n");
+        printf("\t\tMemory=%d\n",memory );
+        printf("\t\t--------\n");
         while (1) {
                 msgid = msgget(key, 0666 | IPC_CREAT);   //put this line every time you wnat to send/recevie a message
+                //cheack if we have a request for resources form the Scheduler
                 if ((msgrcv(msgid, &j, sizeof(Job),3, IPC_NOWAIT))>1) {
-                        // display the message //delete
 
-                        //////////////////////////////////////////////////////////////////
+                        //cheack if we can reserve the resources if not send wait message to the Scheduler
                         if ((memory-j.memory_requirement>0)&&(checkAvaliableResources(resourcesManager))) {
                                 memory-=j.memory_requirement;
-                                reserveResources(j);
+                                reserveResources(j);//reserve the resources
+                                printf("-> Job number=%d Wants: %d megabyte\n",j.number,j.memory_requirement );//FOR TEST
+                                printf("  Requested resources A[%d] B[%d] D[%d] C[%d]\n",j.resources.resource_A,j.resources.resource_B,j.resources.resource_C,j.resources.resource_D);//FOR TEST
 
-                                printf("مورد A%d\n",resourcesManager.resource_A );//FOR TEST
-                                printf("مورد B%d\n",resourcesManager.resource_B );//FOR TEST
-                                printf("مورد C%d\n",resourcesManager.resource_C );//FOR TEST
-                                printf("مورد D%d\n",resourcesManager.resource_D );//FOR TEST
-
-
-                                printf("memory size =%d\n",memory );
                                 s1.Resources_Ava=1;
                                 msgid = msgget(key, 0666 | IPC_CREAT);
                                 msgsnd(msgid, &s1, sizeof(message), 0);
@@ -47,47 +44,32 @@ int main()
                                 s1.Resources_Ava=0;
                                 msgid = msgget(key, 0666 | IPC_CREAT);
                                 msgsnd(msgid, &s1, sizeof(message), 0);
-
                         }
-                        ////////////////////////////get message from Processors//////////////////////////////////////
-                }
+                }//for the first if
+////////////////////////////Get messages from Processors//////////////////////////////////////
                 msgid = msgget(key, 0666 | IPC_CREAT);  //put this line every time you wnat to send/recevie a message
                 if ((msgrcv(msgid, &j, sizeof(Job),11, IPC_NOWAIT))>1) {
-                        printf("\tbefore Resources= %d\n",checkAvaliableResources(resourcesManager) );
+                        printf("\t\t--------\n");
+                        printf("\t\tMemory=%d\n",memory );
+                        printf("\t\t--------\n");
 
                         memory+=j.memory_requirement;
-                        printf("\t memory size %d\n",memory);//delete
                         releaseResources(j);
-                        printf("\tafter Resources= %d\n",checkAvaliableResources(resourcesManager) );
                         sleep(3);
+
                 }
-
-
-
-
-
-
-
-
-
-
-
         }
         // atexit(exitfunc);
         // to destroy the message queue
         // msgctl(msgid, IPC_RMID, NULL);
         return 0;
 }
-
-
 // void exitfunc(){
 //         msgctl(msgid, IPC_RMID, NULL);
 //
 // }
 
-
 int checkAvaliableResources(Resources r){
-
         // printf("\t\t final %d\n",(r.resource_A & r.resource_B)&(r.resource_C &   r.resource_D) );
         if (r.resource_A==1)
                 return (0);
@@ -99,8 +81,6 @@ int checkAvaliableResources(Resources r){
                 return (0);
         return (1);
 }
-
-
 
 void releaseResources(Job m){
         if(m.resources.resource_A) {

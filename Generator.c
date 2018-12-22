@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h> //Header file for sleep(). man 3 sleep for details.
-// #include <pthread.h>
+#include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -13,24 +12,12 @@
 
 /*functions prototype*/
 void Generator();
-// void SchedulerJobs();
 int Possibility();
 int Random(int min, int max);
 struct tm *getDate();
 void handler();
-// void* Processor();
-// int checkAvaliableResources();
-// void reserveResources();
-
 /* defined Constant*/
 #define MAX_JOBS 10000
-// int memory = 2000;
-// int PROCESSORS = 100;/*number of Processors avaliable*/
-/*Intializes resources*/
-// Resources resourcesManager = {0,0,0,0};
-
-/* declare Queue*/
-// Queue* JobsQueue=new_queue();
 
 /* set Handler*/
 void handler(){
@@ -77,7 +64,6 @@ void Generator(){
                 sleep(1);
         }//for the while
 }
-
 
 int Possibility(){
         int possibility;
