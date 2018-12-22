@@ -48,7 +48,7 @@ void Generator(){
                 Job job;
                 for (int i = 0; i < generates_maximum; i++) {
                         if(id < MAX_JOBS) {
-                                job.mtype =1;
+                                job.mtype=3; //3 will go to the resources Manager
                                 job.number = id++;
                                 job.creation_date = getDate();
                                 job.execution_time = Random(10,1000);

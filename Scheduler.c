@@ -18,27 +18,25 @@ void SchedulerJobs();
 // int Possibility();
 // int Random(int min, int max);
 struct tm *getDate();
-void handler();
+void handler(int );
 void Processor();
 int checkAvaliableResources(Resources);
 void releaseResources(message);
 void reserveResources(Job);
 
-/* defined Constant*/
-// #define MAX_JOBS 100
-int memory = 2000;
 int P_1 = 1;//the Processors number | 0=not avaliable
 int P_2 = 1;//the Processors number | 0=not avaliable
-int Resources_Ava=1; //flag for cheack the Resources avaliabality
+int Resources_Ava=0; //flag for cheack the Resources avaliabality
 
 /*Intializes resources*/
-Resources resourcesManager = {0,0,0,0};
+// Resources resourcesManager = {0,0,0,0};
 
 /* declare Queue*/
 // Queue* JobsQueue;
 
 /* set Handler*/
-void handler(){
+void handler(int sig){
+        printf("\t signal number%d\n",sig );
         exit(0);
 }
 Queue* JobsQueue;
@@ -71,67 +69,70 @@ void SchedulerJobs(){
                         printf("end of pipe %d\n",num);
                         exit(0);
                 }else {
-                        // printf("consumer: wrote %d bytes\n", num);
-                        // printf("=====\n");
-                        // printf("%ld\n", job.mtype);
-                        // printf("%d\n", job.number);
-                        // printf("%d\n", job.execution_time);
-                        // printf("%d\n", job.memory_requirement);
-                        // printf("A=%d\tB=%d\tC=%d\tD=%d\n", job.resources.resource_A,job.resources.resource_B,job.resources.resource_C,job.resources.resource_D);
-                        // printf("=====\n");
                         printf("\t\t add to que %d\n",job.number );
                         enqueue(JobsQueue, job);//add the job to the Queue
                         i++;
-                        // if (i>3) {
-                        //         j=dequeue(JobsQueue);
-                        //         printf("\t deque : %d \n",j.number );
-                        // }
-                        printf("checkAvaliableResources %d\n",checkAvaliableResources(resourcesManager) );
+//////////////////Reserve-The Resourcess By ask the resourcesManager//////////////////////////////////
+                        Job j=dequeue(JobsQueue);//dequeue a job from JobsQueue
+                        // Resources_Ava=0;//fix this
+                        do {
+                                printf("\t wait for Resources= %d\n",Resources_Ava );
+                                msgid = msgget(key, 0666 | IPC_CREAT);
+                                msgsnd(msgid, &j, sizeof(Job), 0);//message type =3 by default
+                                msgid = msgget(key, 0666 | IPC_CREAT);
+                                if ((msgrcv(msgid, &m, sizeof(message),5, 0))<0) {
+                                        perror("cannot read form resourcesManager");
+                                }
+                                Resources_Ava=m.Resources_Ava;
+                                printf("\t insie while Resources= %d\n",Resources_Ava );//delete
+                        } while(!Resources_Ava);
 /////////////////////////////////////////////////////////////////////////////////////////////////
                         //check if there a new mail from Processor number 1
-                        msgid = msgget(key, 0666 | IPC_CREAT); //put this line every time you wnat to send/recevie a message
+checkMailBox:           msgid = msgget(key, 0666 | IPC_CREAT); //put this line when send/recevie a message
                         if ((msgrcv(msgid, &m, sizeof(message),9, IPC_NOWAIT))>0) {
-                                // display the message
-                                printf("memory relase =: %d \n",
-                                       m.memory);
-                                printf("resource_A =: %d \n",
-                                       m.resources.resource_A);
-                                printf("resource_A =: %d \n",
-                                       m.resources.resource_B);
-                                printf("resource_A =: %d \n",
-                                       m.resources.resource_C);
-                                printf("resource_A =: %d \n",
-                                       m.resources.resource_D);
-
-                                memory+=m.memory;
                                 P_1=m.P_1;
-                                releaseResources(m);
                         }
 /////////////////////////////////////////////////////////////////////////////////////////////////
-                        if (checkAvaliableResources(resourcesManager)) {   //Cheack the Resources avaliabality
-                                // if (0) {     //Cheack the Resources avaliabality
+                        //check if there a new mail from Processor number 2
 
-                                if (P_1==1) {   //Checks if the processor 1 is avaliable or not
-                                        P_1=0;  //lock the processor because it used
-
-                                        msgid = msgget(key, 0666 | IPC_CREAT); //put this line every time you wnat to send/recevie a message
-                                        // j=*(Job*)dequeue(JobsQueue);  //for DataStructures.h test
-                                        j=dequeue(JobsQueue); //new style
-                                        printf("\t send : %d \n",j.number );
-
-                                        reserveResources(j);
-                                        msgsnd(msgid,&j,sizeof(Job), 0);
-                                        // sleep(3);
-                                        // continue;
-                                }
-                                //TODO add processor number 2
-                                // else if (P_2==1) { //Checks if the processor 1 is avaliable or not
-                                //         P_2=0;
-                                // }
-                                // else
-                                //         continue;
+                        msgid = msgget(key, 0666 | IPC_CREAT); //put this line when send/recevie a message
+                        if ((msgrcv(msgid, &m, sizeof(message),8, IPC_NOWAIT))>0) {
+                                P_2=m.P_2;
                         }
 /////////////////////////////////////////////////////////////////////////////////////////////////
+                        if (P_1==1) {//if processor number 1 avaliable send the job to it
+                                P_1=0;
+                                j.mtype=1;
+                                msgid = msgget(key, 0666 | IPC_CREAT); //put this line every time you wnat to send/recevie a message
+                                msgsnd(msgid, &j, sizeof(Job), 0);
+                                printf("\t send to processor 1\n" );
+
+                        }
+                        else if (P_2==1) {//else if processor number 2 avaliable send the job to it
+                                P_2=0;
+                                j.mtype=2;
+                                msgid = msgget(key, 0666 | IPC_CREAT); //put this line every time you wnat to send/recevie a message
+                                msgsnd(msgid, &j, sizeof(Job), 0);
+                                printf("\t send to processor 2\n" );
+
+                        }
+                        else{  //else wait for any processor to be avaliable(go to check mail box)
+                                printf("\t goto\n");
+                                usleep(8000);
+                                goto checkMailBox;
+                        }
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
                 }
                 sleep(1);
         }//while(1)
@@ -200,26 +201,59 @@ int checkAvaliableResources(Resources r){
 
 
 
-void releaseResources(message m){
-        if(m.resources.resource_A) {
-                resourcesManager.resource_A = 0;
+// void releaseResources(message m){
+//         if(m.resources.resource_A) {
+//                 resourcesManager.resource_A = 0;
+//         }
+//         if(m.resources.resource_B) {
+//                 resourcesManager.resource_B = 0;
+//         }
+//         if(m.resources.resource_C) {
+//                 resourcesManager.resource_C = 0;
+//         }
+//         if(m.resources.resource_D) {
+//                 resourcesManager.resource_D = 0;
+//         }
+// }
+
+
+
+// void reserveResources(Job job){
+//         resourcesManager.resource_A = job.resources.resource_A;
+//         resourcesManager.resource_B = job.resources.resource_B;
+//         resourcesManager.resource_C = job.resources.resource_C;
+//         resourcesManager.resource_D = job.resources.resource_D;
+// }
+
+
+
+
+
+
+
+void send_tO_Pross(Job j,int msgid) {
+
+
+        // if (P_1==1) {     //Checks if the processor 1 is avaliable or not
+        //         P_1=0;    //lock the processor because it used
+
+        // j=*(Job*)dequeue(JobsQueue);  //for DataStructures.h test
+        // j=dequeue(JobsQueue);   //new style
+        printf("\t send to prosse: %d \n",j.number );
+
+        // reserveResources(j);
+        // msgid = msgget(key, 0666 | IPC_CREAT);   //put this line every time you wnat to send/recevie a message
+        if ((msgsnd(msgid,&j,sizeof(Job),0) )<1) {
+                perror("prosser didnt get the mass ");
         }
-        if(m.resources.resource_B) {
-                resourcesManager.resource_B = 0;
-        }
-        if(m.resources.resource_C) {
-                resourcesManager.resource_C = 0;
-        }
-        if(m.resources.resource_D) {
-                resourcesManager.resource_D = 0;
-        }
+        // sleep(3);
+        // continue;
+        // }
+        //TODO add processor number 2
+        // else if (P_2==1) { //Checks if the processor 1 is avaliable or not
+        //         P_2=0;
+        // }
+        // else
+        //         continue;
 }
-
-
-
-void reserveResources(Job job){
-        resourcesManager.resource_A = job.resources.resource_A;
-        resourcesManager.resource_B = job.resources.resource_B;
-        resourcesManager.resource_C = job.resources.resource_C;
-        resourcesManager.resource_D = job.resources.resource_D;
-}
+/////////////////////////////////////////////////////////////////////////////////////////////////}

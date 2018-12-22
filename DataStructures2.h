@@ -2,7 +2,8 @@
 #define HDR
 #include <stdlib.h>
 #include <stdio.h>
-
+// extern int P_1 = 1;//the Processors number | 0=not avaliable
+// extern int P_2 = 1;//the Processors number | 0=not avaliable
 //////////////////////////////////////////////
 /* Structs */
 typedef struct Resources {// 0 = false, 1 = true
@@ -25,6 +26,8 @@ typedef struct message {
         long mtype;
         int memory;
         int P_1;
+        int P_2;
+        int Resources_Ava;
         Resources resources;
 } message;
 ////////////////////////////////////////////////

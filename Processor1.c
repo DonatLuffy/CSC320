@@ -2,7 +2,7 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <unistd.h>
-#include "DataStructures.h"
+#include "DataStructures2.h"
 int main()
 {
 ////////////////////////////////////////////////////////////////////////////////
@@ -17,37 +17,27 @@ int main()
         while (1) {
                 msgid = msgget(key, 0666 | IPC_CREAT); //put this line every time you wnat to send/recevie a message
                 if ((msgrcv(msgid, &j, sizeof(Job),1, 0))>0) {
-                        sleep(3);
-                        // display the message
+                        // sleep(3);
+                        // display the message //delete
                         printf("\t Received : %d \n",
                                j.number);
-
-                        //send data to the Scheduler
-                        s1.memory=j.memory_requirement;
-                        s1.P_1=1;
-                        s1.resources=j.resources;
-
+                        s1.P_1= 1;
 ////////////////////////////////////////////////////////////////////////////
                         ///////////////Do the prossing//////////////////////
-
                         for (int i = 0; i < j.execution_time; i++) {
-                                sleep(0);
+                                usleep(19000);//sleep for fraction of second
                         }
+                        sleep(1);
 ////////////////////////////////////////////////////////////////////////////
-
-                        // printf("memory relase =: %d \n",
-                        //        j.memory_requirement);
-                        // printf("resource_A =: %d \n",
-                        //        s1.resources.resource_A);
-                        // printf("resource_A =: %d \n",
-                        //        s1.resources.resource_B);
-                        // printf("resource_A =: %d \n",
-                        //        s1.resources.resource_C);
-                        // printf("resource_A =: %d \n",
-                        //        s1.resources.resource_D);
-                        ///////////////Relase the Resources//////////////////////
+                        //Relase the Resources after finsh the prossing//////////////////////
                         msgid = msgget(key, 0666 | IPC_CREAT);
                         msgsnd(msgid, &s1, sizeof(message), 0);
+
+                        j.mtype=11;
+                        printf("\tfinsh from job number=%d\n",j.number );
+                        msgid = msgget(key, 0666 | IPC_CREAT);
+                        msgsnd(msgid, &j, sizeof(Job), 0);
+
                 }
         }
         // to destroy the message queue
