@@ -32,10 +32,10 @@ int main()
                                 memory-=j.memory_requirement;
                                 reserveResources(j);
 
-                                printf("reso %d\n",resourcesManager.resource_A );//FOR TEST
-                                printf("reso %d\n",resourcesManager.resource_B );//FOR TEST
-                                printf("reso %d\n",resourcesManager.resource_C );//FOR TEST
-                                printf("reso %d\n",resourcesManager.resource_D );//FOR TEST
+                                printf("مورد A%d\n",resourcesManager.resource_A );//FOR TEST
+                                printf("مورد B%d\n",resourcesManager.resource_B );//FOR TEST
+                                printf("مورد C%d\n",resourcesManager.resource_C );//FOR TEST
+                                printf("مورد D%d\n",resourcesManager.resource_D );//FOR TEST
 
 
                                 printf("memory size =%d\n",memory );
