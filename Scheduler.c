@@ -11,13 +11,8 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include "DataStructures2.h"
-// void Processor(Job job);
 void SchedulerJobs();
 void handler(int );
-// void Processor();
-// void releaseResources(message);
-// void reserveResources(Job);
-// int checkAvaliableResources(Resources);
 struct tm *getDate();
 
 /* set Handler*/
@@ -28,58 +23,51 @@ int Resources_Ava=0; //flag for cheack the Resources avaliabality
 Queue* JobsQueue;
 
 void SchedulerJobs(){
-        // int i=0;//for test
+////////////////////////////////////////////////////////////////////////////////
+        int num, fd;
+        mkfifo ("./pipe", 0666);
+        fd = open("./pipe", O_RDONLY);
         JobsQueue=new_queue();
-        Job j;
         Job job;
         message m;//message form the Processors
-        int num, fd;
-        mkfifo ("./pipe", 0777);
-        fd = open("./pipe", O_RDONLY);
-        // printf("got a writer\n");
-////////////////////////////////////////////////////////////////////////////////
         key_t key;
         int msgid;
 // ftok to generate unique key
         key = ftok("prog.c", 65);
 // msgget creates a message queue
-// and returns identifier
         msgid = msgget(key, 0666 | IPC_CREAT);
 ////////////////////////////////////////////////////////////////////////////////
-        while(1) {
-                Job job;
+        while(1) {    //read jobs form the FIFO and add them to JobsQueue
                 if ((num = read(fd, &job, sizeof(job))) == -1) {
-                        perror("cannot read");
+                        perror("Cannot read from the FIFO");
                         exit(0);
                 }else if(num == 0 || num ==1) {
-                        printf("end of pipe %d\n",num);
+                        printf("End of pipe %d\n",num);
                         exit(0);
                 }else {
                         printf("\t\t ->Add job: %d to the queue\n",job.number );
                         enqueue(JobsQueue, job);//add the job to the Queue
-                        // i++;
 //////////////////Reserve-The Resourcess By ask the resourcesManager//////////////////////////////////
-                        Job j=dequeue(JobsQueue);//dequeue a job from JobsQueue
-                        // Resources_Ava=0;//fix this
+                        job=dequeue(JobsQueue); //dequeue a job from JobsQueue
                         printf("\t Waiting for Resources\n");
-                        do {
+                        do {//send a mail to MemRes_Manager ask him for resourcess
                                 msgid = msgget(key, 0666 | IPC_CREAT);
-                                msgsnd(msgid, &j, sizeof(Job), 0);//message type =3 by default
+                                msgsnd(msgid, &job, sizeof(Job), 0);//send the request
+
                                 msgid = msgget(key, 0666 | IPC_CREAT);
-                                if ((msgrcv(msgid, &m, sizeof(message),5, 0))<0) {
+                                if ((msgrcv(msgid, &m, sizeof(message),5, 0))<0) {//reserve the answer
                                         perror("Cannot read from resourcesManager");
                                 }
                                 Resources_Ava=m.Resources_Ava;
-                        } while(!Resources_Ava);
+                        } while(!Resources_Ava); //if we did't have the resourcess wait for it
 /////////////////////////////////////////////////////////////////////////////////////////////////
-                        //check if there a new mail from Processor number 1
+                        //Check if there a new mail from Processor number 1
 checkMailBox:           msgid = msgget(key, 0666 | IPC_CREAT); //put this line when send/recevie a message
                         if ((msgrcv(msgid, &m, sizeof(message),9, IPC_NOWAIT))>0) {
                                 P_1=m.P_1;
                         }
 //################################################################################################
-                        //check if there a new mail from Processor number 2
-
+                        //Check if there a new mail from Processor number 2
                         msgid = msgget(key, 0666 | IPC_CREAT); //put this line when send/recevie a message
                         if ((msgrcv(msgid, &m, sizeof(message),8, IPC_NOWAIT))>0) {
                                 P_2=m.P_2;
@@ -87,17 +75,17 @@ checkMailBox:           msgid = msgget(key, 0666 | IPC_CREAT); //put this line w
 /////////////////////////Sendig jobs to processor////////////////////////////////////////////////////
                         if (P_1==1) {//if processor number 1 avaliable send the job to it
                                 P_1=0;
-                                j.mtype=1;
+                                job.mtype=1;
                                 msgid = msgget(key, 0666 | IPC_CREAT); //put this line every time you wnat to send/recevie a message
-                                msgsnd(msgid, &j, sizeof(Job), 0);
+                                msgsnd(msgid, &job, sizeof(Job), 0);
                                 printf("\t Send job to processor: 1\n" );
 
                         }
                         else if (P_2==1) {//else if processor number 2 avaliable send the job to it
                                 P_2=0;
-                                j.mtype=2;
+                                job.mtype=2;
                                 msgid = msgget(key, 0666 | IPC_CREAT); //put this line every time you wnat to send/recevie a message
-                                msgsnd(msgid, &j, sizeof(Job), 0);
+                                msgsnd(msgid, &job, sizeof(Job), 0);
                                 printf("\t Send job to processor: 2\n" );
                         }
                         else{  //else wait for any processor to be avaliable(go to check mail box)

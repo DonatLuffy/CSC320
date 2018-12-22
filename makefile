@@ -6,7 +6,7 @@ final:Processor1.o Processor2.o Scheduler.o Generator.o MemRes_Manager.o
 Processor1.o:Processor1.c
 	$(CC) $(CFLAGS) -o Processor1.o Processor1.c
 
-Processor2.o:Processor1.c
+Processor2.o:Processor2.c
 	$(CC) $(CFLAGS) -o Processor2.o Processor2.c
 
 Scheduler.o:Scheduler.c

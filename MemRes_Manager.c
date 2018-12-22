@@ -6,12 +6,16 @@
 #include "DataStructures2.h"
 void exitfunc();
 int memory = 2000;
-Resources resourcesManager = {0,0,0,0};
-int checkAvaliableResources(Resources);
 void reserveResources(Job);
 void releaseResources(Job);
+void handler(int sig);
+Resources resourcesManager = {0,0,0,0};
+int checkAvaliableResources(Resources);
+int temp;//we use temp to remove the msgid from the system after we get kill Signal
+
 int main()
 {
+        signal(SIGINT,handler);
 ////////////////////////////////////////////////////////////////////////////////
         key_t key;
         // ftok to generate unique key
@@ -26,6 +30,7 @@ int main()
         printf("\t\t--------\n");
         while (1) {
                 msgid = msgget(key, 0666 | IPC_CREAT);   //put this line every time you wnat to send/recevie a message
+                temp=msgid;
                 //cheack if we have a request for resources form the Scheduler
                 if ((msgrcv(msgid, &j, sizeof(Job),3, IPC_NOWAIT))>1) {
 
@@ -49,25 +54,17 @@ int main()
 ////////////////////////////Get messages from Processors//////////////////////////////////////
                 msgid = msgget(key, 0666 | IPC_CREAT);  //put this line every time you wnat to send/recevie a message
                 if ((msgrcv(msgid, &j, sizeof(Job),11, IPC_NOWAIT))>1) {
+
                         printf("\t\t--------\n");
                         printf("\t\tMemory=%d\n",memory );
                         printf("\t\t--------\n");
 
                         memory+=j.memory_requirement;
                         releaseResources(j);
-                        sleep(3);
-
                 }
         }
-        // atexit(exitfunc);
-        // to destroy the message queue
-        // msgctl(msgid, IPC_RMID, NULL);
         return 0;
 }
-// void exitfunc(){
-//         msgctl(msgid, IPC_RMID, NULL);
-//
-// }
 
 int checkAvaliableResources(Resources r){
         // printf("\t\t final %d\n",(r.resource_A & r.resource_B)&(r.resource_C &   r.resource_D) );
@@ -102,4 +99,10 @@ void reserveResources(Job job){
         resourcesManager.resource_B = job.resources.resource_B;
         resourcesManager.resource_C = job.resources.resource_C;
         resourcesManager.resource_D = job.resources.resource_D;
+}
+
+void handler(int sig) {
+        printf("Signal number%d \n",sig );
+        msgctl(temp, IPC_RMID, NULL);
+        exit(0);
 }
