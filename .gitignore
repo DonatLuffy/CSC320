@@ -4,3 +4,7 @@
 *.out
 
 *.o
+
+test
+
+test\.c
