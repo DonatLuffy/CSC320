@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h> //Header file for sleep(). man 3 sleep for details.
-#include <pthread.h>
+#include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -9,113 +8,120 @@
 #include <dirent.h>
 #include <time.h>
 #include <signal.h>
-#include "DataStructures.h"
-
-/* Structs */
-typedef struct Resources {// 0 = false, 1 = true
-  int resource_A;
-  int resource_B;
-  int resource_C;
-  int resource_D;
-}Resources;
-
-typedef struct Job {
-  int number;
-  struct tm *creation_date;
-  int execution_time;
-  int memory_requirement;
-  Resources resources;
-}Job;
-
-
-/*functions prototype*/
+#include <sys/ipc.h>
+#include <sys/msg.h>
+#include "DataStructures2.h"
 void SchedulerJobs();
-int Possibility();
-int Random();
+void handler(int );
 struct tm *getDate();
-void handler();
-void* Processor();
-int checkAvaliableResources();
-void reserveResources();
-
-/* defined Constant*/
-#define MAX_JOBS 100
-int memory = 2000;
-int PROCESSORS = 100;/*number of Processors avaliable*/
-/*Intializes resources*/
-Resources resourcesManager = {0,0,0,0};
-
-/* declare Queue*/
-Queue* JobsQueue;
 
 /* set Handler*/
-void handler(){
-  exit(0);
-}
+void handler(int);
+int P_1 = 1;//the Processors number | 0=not avaliable
+int P_2 = 1;//the Processors number | 0=not avaliable
+int Resources_Ava=0; //flag for cheack the Resources avaliabality
+Queue* JobsQueue;
 
 void SchedulerJobs(){
-  Job job;
-  int num, fd;
-  mkfifo ("/Users/Donat/csc320/project/pipe", 0777);
-  fd = open("/Users/Donat/csc320/project/pipe", O_RDONLY);
-  printf("got a writer\n");
-  while(1){
-    if ((num = read(fd, &job, sizeof(job))) == -1){
-      perror("cannot read");
-      exit(0);
-    }else if(num == 0){
-      printf("num == 0\n");
-      exit(0);
-    }else {
-      printf("consumer: wrote %d bytes\n", num);
-      printf("=====\n");
-      printf("%d\n", job.number);
-      printf("%d\n", job.execution_time);
-      printf("%d\n", job.memory_requirement);
-      printf("A=%d\tB=%d\tC=%d\tD=%d\n", job.resources.resource_A,job.resources.resource_B,job.resources.resource_C,job.resources.resource_D);
-      printf("=====\n");
-    }
-  }
-  // enqueue(JobsQueue, &job);
-  // Job j = *((Job*)dequeue(JobsQueue));
-  // printf("ID: %d\n", j.number);
-}
+////////////////////////////////////////////////////////////////////////////////
+        int num, fd;
+        mkfifo ("./pipe", 0666);
+        //TODO remove the pipe after finshing
+        fd = open("./pipe", O_RDONLY);
+        JobsQueue=new_queue();
+        Job job;
+        message m;//message form the Processors
+        key_t key;
+        int msgid;
+// ftok to generate unique key
+        key = ftok("prog.c", 65);
+// msgget creates a message queue
+        msgid = msgget(key, 0666 | IPC_CREAT);
+////////////////////////////////////////////////////////////////////////////////
+        while(1) {    //read jobs form the FIFO and add them to JobsQueue
+                if ((num = read(fd, &job, sizeof(job))) == -1) {
+                        perror("Cannot read from the FIFO");
+                        exit(0);
+                }else if(num == 0 || num ==1) {
+                        printf("End of pipe %d\n",num);
+                        exit(0);
+                }else {
+                        printf("\t\t ->Add job: %d to the queue\n",job.number );
+                        enqueue(JobsQueue, job);//add the job to the Queue
+//////////////////Reserve-The Resourcess By ask the resourcesManager//////////////////////////////////
+                        job=dequeue(JobsQueue); //dequeue a job from JobsQueue
+                        printf("\t Waiting for Resources\n");
+                        do {//send a mail to MemRes_Manager ask him for resourcess
+                                msgid = msgget(key, 0666 | IPC_CREAT);
+                                msgsnd(msgid, &job, sizeof(Job), 0);//send the request
 
-int Possibility(){
-  int possibility;
-  possibility = Random(1,10);
-  if(possibility == 1){
-    return 1;
-  }else{
-    return 0;
-  }
-}
+                                msgid = msgget(key, 0666 | IPC_CREAT);
+                                if ((msgrcv(msgid, &m, sizeof(message),5, 0))<0) {//reserve the answer
+                                        perror("Cannot read from resourcesManager");
+                                }
+                                Resources_Ava=m.Resources_Ava;
+                        } while(!Resources_Ava); //if we did't have the resourcess wait for it
+/////////////////////////////////////////////////////////////////////////////////////////////////
+                        //Check if there a new mail from Processor number 1
+checkMailBox:           msgid = msgget(key, 0666 | IPC_CREAT); //put this line when send/recevie a message
+                        if ((msgrcv(msgid, &m, sizeof(message),9, IPC_NOWAIT))>0) {
+                                P_1=m.P_1;
+                        }
+//################################################################################################
+                        //Check if there a new mail from Processor number 2
+                        msgid = msgget(key, 0666 | IPC_CREAT); //put this line when send/recevie a message
+                        if ((msgrcv(msgid, &m, sizeof(message),8, IPC_NOWAIT))>0) {
+                                P_2=m.P_2;
+                        }
+/////////////////////////Sendig jobs to processor////////////////////////////////////////////////////
+                        if (P_1==1) {//if processor number 1 avaliable send the job to it
+                                P_1=0;
+                                job.mtype=1;
+                                msgid = msgget(key, 0666 | IPC_CREAT); //put this line every time you wnat to send/recevie a message
+                                msgsnd(msgid, &job, sizeof(Job), 0);
+                                printf("\t Send job to processor: 1\n" );
 
-int Random(int min, int max){
-  return (min + (rand() % (max - min + 1)));
+                        }
+                        else if (P_2==1) {//else if processor number 2 avaliable send the job to it
+                                P_2=0;
+                                job.mtype=2;
+                                msgid = msgget(key, 0666 | IPC_CREAT); //put this line every time you wnat to send/recevie a message
+                                msgsnd(msgid, &job, sizeof(Job), 0);
+                                printf("\t Send job to processor: 2\n" );
+                        }
+                        else{  //else wait for any processor to be avaliable(go to check mail box)
+                                usleep(9000);
+                                goto checkMailBox;
+                        }
+/////////////////////////////////////////////////////////////////////////////////////////////////
+                }
+                sleep(1);
+        }//while(1)
+        close(fd);      //close the FIFO
+}//void SchedulerJobs
+
+int main(int argc, char *argv[]){
+        /*set srand (seed) once to prevent repeate values in seconds*/
+        time_t t;
+        srand((unsigned) time(&t));
+        /* Intializes jobs queue for SchedulerJobs*/
+        JobsQueue = new_queue();
+        /*set sigmal to force quit programm (try without it! and press CTRL+C)*/
+        signal(SIGINT,handler);
+        /* start run program */
+        SchedulerJobs();
+        return 0;
 }
 
 struct tm *getDate(){
-  time_t t;
-  struct tm *date;
-  time(&t);
-  date = localtime(&t);
-  return date;
+        time_t t;
+        struct tm *date;
+        time(&t);
+        date = localtime(&t);
+        return date;
 }
 
-int main(int argc, char *argv[]){
-
-  /*set srand (seed) once to prevent repeate values in seconds*/
-  time_t t;
-  srand((unsigned) time(&t));
-
-  /* Intializes jobs queue for SchedulerJobs*/
-  JobsQueue = new_queue();
-
-  /*set sigmal to force quit programm (try without it! and press CTRL+C)*/
-  signal(SIGINT,handler);
-  /* start run program */
-  SchedulerJobs();
-
-  return 0;
+void handler(int sig){
+        printf("\t Signal number%d\n",sig);//Print the signal value
+        exit(0);
 }

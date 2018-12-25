@@ -2,7 +2,8 @@
 #define HDR
 #include <stdlib.h>
 #include <stdio.h>
-
+// extern int P_1 = 1;//the Processors number | 0=not avaliable
+// extern int P_2 = 1;//the Processors number | 0=not avaliable
 //////////////////////////////////////////////
 /* Structs */
 typedef struct Resources {// 0 = false, 1 = true
@@ -25,16 +26,18 @@ typedef struct message {
         long mtype;
         int memory;
         int P_1;
+        int P_2;
+        int Resources_Ava;
         Resources resources;
 } message;
 ////////////////////////////////////////////////
 /* define Node*/
 typedef struct Node {
-        void* data;
+        Job data;
         struct Node* next;
 }Node;
 
-Node* new_node(void *data){
+Node* new_node(Job data){
         Node* node = (Node*) calloc(1,sizeof(Node));
         node->data = data;
         return node;
@@ -62,13 +65,7 @@ int is_empty(LinkedList* list){
         return !list->head;
 }
 
-
-//
-// void enqueue(Queue* queue, void* data){
-//         insert_at_back(queue->buffer, data);
-// }
-
-void insert_at_back(LinkedList* list, void* data){
+void insert_at_back(LinkedList* list, Job data){
         Node* node = new_node(data);
         if(!node) {
                 return;
@@ -86,27 +83,18 @@ void insert_at_back(LinkedList* list, void* data){
         }
 }
 
-
-
-
-
-
-
-void* remove_from_front(LinkedList* list){
-        void* result;
+Job remove_from_front(LinkedList* list){
+        Job result;
         Node* tmp = list->head;
-        if(!tmp)
-                return NULL;
-
+        if(!tmp) {
+                perror("error trying to dequeue from empty queue");
+                exit(1);
+        }
         result = tmp->data;
         list->head = tmp->next;
         free(tmp);
         return result;
 }
-
-
-
-
 
 /* define Queue*/
 typedef struct Queue {
@@ -117,11 +105,11 @@ Queue* new_queue(){
         queue->buffer = new_linked_list();
         return queue;
 }
-void enqueue(Queue* queue, void* data){
+void enqueue(Queue* queue, Job data){
         insert_at_back(queue->buffer, data);
 }
 
-void* dequeue(Queue* queue){
+Job dequeue(Queue* queue){
 
         return remove_from_front(queue->buffer);
 }
