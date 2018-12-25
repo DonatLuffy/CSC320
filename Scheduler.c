@@ -26,6 +26,7 @@ void SchedulerJobs(){
 ////////////////////////////////////////////////////////////////////////////////
         int num, fd;
         mkfifo ("./pipe", 0666);
+        //TODO remove the pipe after finshing
         fd = open("./pipe", O_RDONLY);
         JobsQueue=new_queue();
         Job job;

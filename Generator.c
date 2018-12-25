@@ -26,7 +26,7 @@ void handler(){
 
 void Generator(){
         int num, fd;
-        mkfifo("./pipe", 0777);
+        mkfifo("./pipe", 0666);
         printf("waiting for readers...\n");
         fd = open("./pipe", O_WRONLY);
         int id = 0;

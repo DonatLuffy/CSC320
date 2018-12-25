@@ -25,7 +25,7 @@ int main()
 ////////////////////////////////////////////////////////////////////////////
                         ///////////////Do the prossing//////////////////////
                         for (int i = 0; i < j.execution_time; i++) {
-                                usleep(19000);//sleep for fraction of second
+                                usleep(1000);//sleep for fraction of second
                         }
                         sleep(1);
 ////////////////////////////////////////////////////////////////////////////

@@ -25,7 +25,7 @@ int main()
 ////////////////////////////////////////////////////////////////////////////
                         ///////////////Do the prossing//////////////////////
                         for (int i = 0; i < j.execution_time; i++) {
-                                usleep(19000);//sleep for fraction of second
+                                usleep(11000);//sleep for fraction of second
                         }
 ////////////////////////////////////////////////////////////////////////////
                         //Relase the Resources after finsh the prossing//////////////////////
