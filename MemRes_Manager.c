@@ -4,13 +4,13 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "DataStructures2.h"
-void exitfunc();
+
 int memory = 2000;
 void reserveResources(Job);
 void releaseResources(Job);
 void handler(int sig);
 Resources resourcesManager = {0,0,0,0};
-int checkAvaliableResources(Resources);
+int checkAvaliableResources(Job);
 int temp;//we use temp to remove the msgid from the system after we get kill Signal
 
 int main()
@@ -35,7 +35,7 @@ int main()
                 if ((msgrcv(msgid, &j, sizeof(Job),3, IPC_NOWAIT))>1) {
 
                         //cheack if we can reserve the resources if not send wait message to the Scheduler
-                        if ((memory-j.memory_requirement>0)&&(checkAvaliableResources(resourcesManager))) {
+                        if ((memory-j.memory_requirement>0)&&(checkAvaliableResources(j))) {
                                 memory-=j.memory_requirement;
                                 reserveResources(j);//reserve the resources
                                 printf("-> Job number=%d Wants: %d megabyte\n",j.number,j.memory_requirement );//FOR TEST
@@ -66,17 +66,11 @@ int main()
         return 0;
 }
 
-int checkAvaliableResources(Resources r){
-        // printf("\t\t final %d\n",(r.resource_A & r.resource_B)&(r.resource_C &   r.resource_D) );
-        if (r.resource_A==1)
-                return (0);
-        if (r.resource_B==1)
-                return (0);
-        if (r.resource_C==1)
-                return (0);
-        if (r.resource_D==1)
-                return (0);
-        return (1);
+int checkAvaliableResources(Job job){
+	return (!(job.resources.resource_A && resourcesManager.resource_A) &&
+          !(job.resources.resource_B && resourcesManager.resource_B) &&
+          !(job.resources.resource_C && resourcesManager.resource_C) &&
+          !(job.resources.resource_D && resourcesManager.resource_D));
 }
 
 void releaseResources(Job m){
