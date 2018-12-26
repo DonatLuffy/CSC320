@@ -21,8 +21,12 @@ int P_1 = 1;//the Processors number | 0=not avaliable
 int P_2 = 1;//the Processors number | 0=not avaliable
 int Resources_Ava=0; //flag for cheack the Resources avaliabality
 Queue* JobsQueue;
+FILE* SchedulerLog;
 
 void SchedulerJobs(){
+        SchedulerLog = fopen ("./log/Scheduler.log", "w+");
+        if(!SchedulerLog)
+          perror("open");
 ////////////////////////////////////////////////////////////////////////////////
         int num, fd;
         mkfifo ("./pipe", 0666);
@@ -43,14 +47,16 @@ void SchedulerJobs(){
                         perror("Cannot read from the FIFO");
                         exit(0);
                 }else if(num == 0 || num ==1) {
-                        printf("End of pipe %d\n",num);
+                        fprintf(SchedulerLog,"End of pipe %d\n",num);
                         exit(0);
                 }else {
-                        printf("\t\t ->Add job: %d to the queue\n",job.number );
+                        // printDate();
+                        fprintf(SchedulerLog,"%s\t\t->Add job: %d to the queue\n",printDate() ,job.number );
                         enqueue(JobsQueue, job);//add the job to the Queue
 //////////////////Reserve-The Resourcess By ask the resourcesManager//////////////////////////////////
                         job=dequeue(JobsQueue); //dequeue a job from JobsQueue
-                        printf("\t Waiting for Resources\n");
+                        // printDate();
+                        // fprintf(SchedulerLog,"%s\t\tWaiting for Resources\n",printDate());
                         do {//send a mail to MemRes_Manager ask him for resourcess
                                 msgid = msgget(key, 0666 | IPC_CREAT);
                                 msgsnd(msgid, &job, sizeof(Job), 0);//send the request
@@ -79,7 +85,9 @@ checkMailBox:           msgid = msgget(key, 0666 | IPC_CREAT); //put this line w
                                 job.mtype=1;
                                 msgid = msgget(key, 0666 | IPC_CREAT); //put this line every time you wnat to send/recevie a message
                                 msgsnd(msgid, &job, sizeof(Job), 0);
-                                printf("\t Send job to processor: 1\n" );
+                                // printDate();
+                                fprintf(SchedulerLog,"\t\t->Dispatched job ID= %d to Processor1\n",job.number );
+                                // fprintf(SchedulerLog,"\t Send job to processor: 1\n" );
 
                         }
                         else if (P_2==1) {//else if processor number 2 avaliable send the job to it
@@ -87,7 +95,9 @@ checkMailBox:           msgid = msgget(key, 0666 | IPC_CREAT); //put this line w
                                 job.mtype=2;
                                 msgid = msgget(key, 0666 | IPC_CREAT); //put this line every time you wnat to send/recevie a message
                                 msgsnd(msgid, &job, sizeof(Job), 0);
-                                printf("\t Send job to processor: 2\n" );
+                                // printDate();
+                                fprintf(SchedulerLog,"\t\t->Dispatched job ID= %d to Processor2\n",job.number );
+                                // fprintf(SchedulerLog,"\t Send job to processor: 2\n" );
                         }
                         else{  //else wait for any processor to be avaliable(go to check mail box)
                                 usleep(9000);
@@ -122,6 +132,6 @@ struct tm *getDate(){
 }
 
 void handler(int sig){
-        printf("\t Signal number%d\n",sig);//Print the signal value
-        exit(0);
+  fclose(SchedulerLog);
+  exit(0);
 }

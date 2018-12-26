@@ -6,10 +6,9 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include <time.h>
 #include <signal.h>
-#include "DataStructures.h"
-
+#include "DataStructures2.h"
+// void printDate();
 /*functions prototype*/
 void Generator();
 int Possibility();
@@ -19,21 +18,33 @@ void handler();
 /* defined Constant*/
 #define MAX_JOBS 10000
 
+FILE *GeneratorLog;
+
 /* set Handler*/
-void handler(){
-        exit(0);
+void handler(int sig){
+  fclose(GeneratorLog);
+  exit(0);
 }
 
 void Generator(){
+        // int Generator=open("./log/Generator.txt",O_TRUNC|O_CREAT|O_WRONLY,0666);
+        // printf("%d\n",Generator );
+
+
+        GeneratorLog = fopen ("./log/Generator.log", "w+");
+        if(!GeneratorLog)
+          perror("open");
+
         int num, fd;
         mkfifo("./pipe", 0666);
-        printf("waiting for readers...\n");
+        // printf("waiting for readers...\n");
         fd = open("./pipe", O_WRONLY);
         int id = 0;
         while(1) {
                 int generates_maximum = Random(0,5);//MAX 5 job per second
                 Job job;
                 for (int i = 0; i < generates_maximum; i++) {
+                        usleep(1000);
                         if(id < MAX_JOBS) {
                                 job.mtype=3; //3 will go to the resources Manager
                                 job.number = id++;
@@ -44,19 +55,16 @@ void Generator(){
                                 job.resources.resource_B = Possibility();
                                 job.resources.resource_C = Possibility();
                                 job.resources.resource_D = Possibility();
+                                // int t=job.number
+                                // int w=write(Generator,"\t\tID=%d\t\tGenerate\n",30);
+                                // Generator
+                                // printDate();
+                                fprintf(GeneratorLog,"%s\t\tID=%d\t\tGenerate\n",printDate(), job.number);
 
-                                //TODO write log here
-                                printf("=====\n");
-                                printf("%ld\n", job.mtype);
-                                printf("%d\n", job.number);
-                                printf("%d\n", job.execution_time);
-                                printf("%d\n", job.memory_requirement);
-                                printf("A=%d\tB=%d\tC=%d\tD=%d\n", job.resources.resource_A,job.resources.resource_B,job.resources.resource_C,job.resources.resource_D);
-                                printf("=====\n");
                                 if ((num = write(fd, &job, sizeof(job))) == -1)
                                         perror("cannot write in pipe");
                                 else
-                                        printf("producer: wrote %d bytes\n", num);
+                                        printf("\n");
                         }
                         else
                                 exit(0); //exit if id > MAX_JOBS
@@ -91,9 +99,32 @@ int main(int argc, char *argv[]){
         /*set srand (seed) once to prevent repeate values in seconds*/
         time_t t;
         srand((unsigned) time(&t));
-
+        signal(SIGINT, handler);
         /* start run program */
         Generator();
 
         return 0;
 }
+
+
+
+// void printDate(){
+//         char buffer[26];
+//         int millisec;
+//         struct tm* tm_info;
+//         struct timeval tv;
+//
+//         gettimeofday(&tv, NULL);
+//
+//         millisec = lrint(tv.tv_usec/1000.0); // Round to nearest millisec
+//         if (millisec>=1000) { // Allow for rounding up to nearest second
+//                 millisec -=1000;
+//                 tv.tv_sec++;
+//         }
+//
+//         tm_info = localtime(&tv.tv_sec);
+//
+//         strftime(buffer, 26, " %H:%M:%S", tm_info);
+//         printf("%s.%03d", buffer, millisec);
+//
+// }

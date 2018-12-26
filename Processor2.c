@@ -3,8 +3,20 @@
 #include <sys/msg.h>
 #include <unistd.h>
 #include "DataStructures2.h"
+
+FILE* Processor2Log;
+void handler(int sig){
+  fclose(Processor2Log);
+  exit(0);
+}
+
 int main()
 {
+      signal(SIGINT, handler);
+
+      Processor2Log = fopen ("./log/Processor2.log", "w+");
+      if(!Processor2Log)
+        perror("open");
 ////////////////////////////////////////////////////////////////////////////////
         key_t key;
         int msgid;
@@ -19,7 +31,7 @@ int main()
                 if ((msgrcv(msgid, &j, sizeof(Job),2, 0))>0) {
                         // sleep(3);
                         // display the message //delete
-                        printf("\t ->Received job number=: %d \n",
+                        fprintf(Processor2Log,"%s\t\t ->Received job number=: %d \n",printDate(),
                                j.number);
                         s1.P_2= 1;
 ////////////////////////////////////////////////////////////////////////////
@@ -33,7 +45,7 @@ int main()
                         msgsnd(msgid, &s1, sizeof(message), 0);
 
                         j.mtype=11;
-                        printf("   Finsh from job number=%d\n",j.number );
+                        fprintf(Processor2Log,"%s\t\tFinsh from job number=%d\n",printDate() ,j.number );
                         msgid = msgget(key, 0666 | IPC_CREAT);
                         msgsnd(msgid, &j, sizeof(Job), 0);
 

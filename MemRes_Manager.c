@@ -12,10 +12,13 @@ void handler(int sig);
 Resources resourcesManager = {0,0,0,0};
 int checkAvaliableResources(Job);
 int temp;//we use temp to remove the msgid from the system after we get kill Signal
-
+FILE* MemRes;
 int main()
 {
         signal(SIGINT,handler);
+        MemRes = fopen ("./log/MemRes.log", "w+");
+        if(!MemRes)
+          perror("open");
 ////////////////////////////////////////////////////////////////////////////////
         key_t key;
         // ftok to generate unique key
@@ -25,9 +28,9 @@ int main()
         message s1;
         s1.mtype=5;//change this
 ////////////////////////////////////////////////////////////////////////////////
-        printf("\t\t--------\n");
-        printf("\t\tMemory=%d\n",memory );
-        printf("\t\t--------\n");
+        fprintf(MemRes,"\t\t--------\n");
+        fprintf(MemRes,"\t\tMemory=%d\n",memory );
+        fprintf(MemRes,"\t\t--------\n");
         while (1) {
                 msgid = msgget(key, 0666 | IPC_CREAT);   //put this line every time you wnat to send/recevie a message
                 temp=msgid;
@@ -38,8 +41,8 @@ int main()
                         if ((memory-j.memory_requirement>0)&&(checkAvaliableResources(j))) {
                                 memory-=j.memory_requirement;
                                 reserveResources(j);//reserve the resources
-                                printf("-> Job number=%d Wants: %d megabyte\n",j.number,j.memory_requirement );//FOR TEST
-                                printf("  Requested resources A[%d] B[%d] D[%d] C[%d]\n",j.resources.resource_A,j.resources.resource_B,j.resources.resource_C,j.resources.resource_D);//FOR TEST
+                                fprintf(MemRes,"%s\t\t-> Job number=%d Wants: %d megabyte\n",printDate(), j.number, j.memory_requirement );//FOR TEST
+                                fprintf(MemRes,"%s\t\tRequested resources A[%d] B[%d] D[%d] C[%d]\n",printDate(), j.resources.resource_A,j.resources.resource_B,j.resources.resource_C,j.resources.resource_D);//FOR TEST
 
                                 s1.Resources_Ava=1;
                                 msgid = msgget(key, 0666 | IPC_CREAT);
@@ -55,9 +58,9 @@ int main()
                 msgid = msgget(key, 0666 | IPC_CREAT);  //put this line every time you wnat to send/recevie a message
                 if ((msgrcv(msgid, &j, sizeof(Job),11, IPC_NOWAIT))>1) {
 
-                        printf("\t\t--------\n");
-                        printf("\t\tMemory=%d\n",memory );
-                        printf("\t\t--------\n");
+                        fprintf(MemRes,"\t\t--------\n");
+                        fprintf(MemRes,"\t\tMemory=%d\n",memory );
+                        fprintf(MemRes,"\t\t--------\n");
 
                         memory+=j.memory_requirement;
                         releaseResources(j);
@@ -98,5 +101,6 @@ void reserveResources(Job job){
 void handler(int sig) {
         printf("Signal number%d \n",sig );
         msgctl(temp, IPC_RMID, NULL);
+        fclose(MemRes);
         exit(0);
 }

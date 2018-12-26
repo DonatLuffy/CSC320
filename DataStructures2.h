@@ -2,8 +2,38 @@
 #define HDR
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
+#include <sys/time.h>
+#include <math.h>
+#include <string.h>
+
+
 // extern int P_1 = 1;//the Processors number | 0=not avaliable
 // extern int P_2 = 1;//the Processors number | 0=not avaliable
+char* printDate(){
+        char *buffer=(char*)calloc(50,sizeof(char));
+        int millisec;
+        struct tm* tm_info;
+        struct timeval tv;
+
+        gettimeofday(&tv, NULL);
+
+        millisec = lrint(tv.tv_usec/1000.0); // Round to nearest millisec
+        if (millisec>=1000) { // Allow for rounding up to nearest second
+                millisec -=1000;
+                tv.tv_sec++;
+        }
+
+        tm_info = localtime(&tv.tv_sec);
+        char *tmp=(char*)calloc(7,sizeof(char));
+        sprintf(tmp,"%03d",millisec);
+
+
+        strftime(buffer, 26, " %H:%M:%S", tm_info);
+        strcat(buffer,tmp);
+        // printf("%s.%03d", buffer, millisec);
+        return buffer;
+}
 //////////////////////////////////////////////
 /* Structs */
 typedef struct Resources {// 0 = false, 1 = true
